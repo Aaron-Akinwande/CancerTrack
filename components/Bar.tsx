@@ -6,9 +6,10 @@ interface BarProps {
   value: number; // 0–1
   color: string;
   delay?: number;
+  showLabel?: boolean;
 }
 
-export function Bar({ value, color, delay = 0 }: BarProps) {
+export function Bar({ value, color, delay = 0, showLabel = false }: BarProps) {
   const [w, setW] = useState(0);
 
   useEffect(() => {
@@ -17,13 +18,14 @@ export function Bar({ value, color, delay = 0 }: BarProps) {
   }, [value, delay]);
 
   return (
-    <div className="bg-slate-800 rounded h-2 overflow-hidden">
+    <div className="relative bg-slate-800 rounded-full h-2.5 overflow-hidden">
       <div
-        className="h-full rounded"
+        className="absolute inset-y-0 left-0 rounded-full"
         style={{
           width: `${w}%`,
-          background: color,
-          transition: "width 1s cubic-bezier(0.34,1.56,0.64,1)",
+          background: `linear-gradient(90deg, ${color}99, ${color})`,
+          transition: "width 0.9s cubic-bezier(0.34,1.2,0.64,1)",
+          boxShadow: `0 0 8px ${color}55`,
         }}
       />
     </div>

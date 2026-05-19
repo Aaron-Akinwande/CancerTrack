@@ -2,7 +2,7 @@
 
 import type { Symptoms } from "@/types";
 import { SYMPTOM_FIELDS } from "@/lib/constants";
-import { Field, inputStyle } from "./Field";
+import { Field, inputStyle, Card, SectionHeading, NavButtons } from "./Field";
 
 interface SymptomsStepProps {
   symptoms: Symptoms;
@@ -11,69 +11,92 @@ interface SymptomsStepProps {
   onBack: () => void;
 }
 
+const WEIGHT_COLOR: Record<string, string> = {
+  High: "text-rose-400 bg-rose-950 border-rose-900",
+  Moderate: "text-amber-400 bg-amber-950 border-amber-900",
+  "Low-Mod": "text-sky-400  bg-sky-950  border-sky-900",
+  Low: "text-slate-400 bg-slate-800 border-slate-700",
+};
+
 export function SymptomsStep({
   symptoms,
   onChange,
   onNext,
   onBack,
 }: SymptomsStepProps) {
-  return (
-    <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800">
-      <h2
-        className="text-2xl font-black text-slate-50 mb-1"
-        style={{ fontFamily: "'Georgia', serif" }}
-      >
-        Clinical Symptom Assessment
-      </h2>
-      <p className="text-base text-slate-500 mb-6">
-        Select all symptoms currently reported by the patient
-      </p>
+  const activeCount = SYMPTOM_FIELDS.filter((s) => symptoms[s.key]).length;
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
+  return (
+    <Card className="p-6 sm:p-8">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <SectionHeading
+          title="Symptom Assessment"
+          subtitle="Select all symptoms currently reported. Each carries an evidence-based risk modifier."
+        />
+        {activeCount > 0 && (
+          <div className="shrink-0 bg-sky-950 border border-sky-800 rounded-xl px-3 py-1.5 text-center">
+            <div className="text-lg font-black text-sky-400 leading-none">
+              {activeCount}
+            </div>
+            <div className="text-[10px] text-sky-600 uppercase tracking-wide">
+              selected
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Symptom grid — 1 col mobile, 2 col tablet+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         {SYMPTOM_FIELDS.map((s) => {
           const active = symptoms[s.key];
           return (
-            <div
+            <button
               key={s.key}
+              type="button"
               onClick={() => onChange(s.key, !active)}
               className={`
-                p-4 rounded-xl cursor-pointer transition-all duration-200 select-none
+                w-full text-left p-4 rounded-xl border transition-all duration-150 select-none
                 ${
                   active
-                    ? "bg-blue-950 border border-sky-400"
-                    : "bg-slate-800 border border-slate-700 hover:border-slate-500"
+                    ? "bg-sky-950/60 border-sky-500 shadow-lg shadow-sky-950/50"
+                    : "bg-slate-800/60 border-slate-700 hover:border-slate-500 hover:bg-slate-800"
                 }
               `}
             >
-              <div className="flex justify-between items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-sm font-bold mb-1 ${active ? "text-sky-300" : "text-slate-300"}`}
-                  >
-                    {s.label}
-                  </div>
-                  <div className="text-xs text-slate-500 leading-snug">
-                    {s.desc}
-                  </div>
+              <div className="flex items-start gap-3">
+                {/* Checkbox */}
+                <div
+                  className={`
+                  mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center
+                  shrink-0 transition-all duration-150
+                  ${active ? "bg-sky-500 border-sky-500" : "border-slate-600 bg-transparent"}
+                `}
+                >
+                  {active && (
+                    <span className="text-white text-xs font-black">✓</span>
+                  )}
                 </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  {/* Checkbox */}
-                  <div
-                    className={`w-5 h-5 rounded flex items-center justify-center text-xs font-black
-                      ${
-                        active
-                          ? "bg-sky-400 border-2 border-sky-400 text-slate-900"
-                          : "border-2 border-slate-600 bg-transparent text-transparent"
-                      }`}
-                  >
-                    ✓
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-sm font-bold ${active ? "text-sky-200" : "text-slate-300"}`}
+                    >
+                      {s.label}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${WEIGHT_COLOR[s.weight]}`}
+                    >
+                      {s.weight}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-600 tracking-wide">
-                    {s.weight}
-                  </span>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-snug">
+                    {s.desc}
+                  </p>
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -97,27 +120,11 @@ export function SymptomsStep({
         </select>
       </Field>
 
-      <div className="flex gap-3 mt-2">
-        <button
-          onClick={onBack}
-          className="flex-1 py-3.5 rounded-xl border border-slate-700 bg-transparent
-                     text-slate-400 text-base font-bold cursor-pointer hover:border-slate-500
-                     transition-colors"
-        >
-          ← Back
-        </button>
-        <button
-          onClick={onNext}
-          className="flex-3 py-3.5 rounded-xl text-white text-base font-black tracking-wider
-                     cursor-pointer transition-transform hover:-translate-y-0.5 shadow-lg shadow-sky-900/40"
-          style={{
-            background: "linear-gradient(135deg, #0284c7, #0369a1)",
-            border: "none",
-          }}
-        >
-          Continue → Tumour Measurements
-        </button>
-      </div>
-    </div>
+      <NavButtons
+        onBack={onBack}
+        onNext={onNext}
+        nextLabel="Continue → Tumour Measurements"
+      />
+    </Card>
   );
 }

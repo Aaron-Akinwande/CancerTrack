@@ -21,15 +21,12 @@ import { SymptomsStep } from "@/components/SymptomsStep";
 import { MeasurementsStep } from "@/components/MeasurementsStep";
 import { ResultsStep } from "@/components/ResultsStep";
 
-// ─── Default state factories ──────────────────────────────────────────────────
-
 const defaultDemo = (): Demographics => ({
   name: "",
   age: "",
   gender: "Female",
   menopausal: "Pre-menopausal",
 });
-
 const defaultSymptoms = (): Symptoms => ({
   lump: false,
   nipple_discharge: false,
@@ -40,7 +37,6 @@ const defaultSymptoms = (): Symptoms => ({
   prev_biopsy: false,
   duration_weeks: "",
 });
-
 const defaultMeasurements = (): Measurements => ({
   radius: "",
   texture: "",
@@ -53,8 +49,6 @@ const defaultMeasurements = (): Measurements => ({
   symmetry: "",
   fractal_dimension: "",
 });
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CancerTrackPage() {
   const [step, setStep] = useState<FormStep>(1);
@@ -93,17 +87,14 @@ export default function CancerTrackPage() {
       parseFloat(measurements.symmetry) || SCALER_MEAN[8],
       parseFloat(measurements.fractal_dimension) || SCALER_MEAN[9],
     ];
-
     const lrProb = runLogisticRegression(features);
     const dtResult = runDecisionTree(features);
-
     let modifier = getAgeRisk(parseInt(demo.age) || 45);
     const symptomKeys = Object.keys(SYMPTOM_WEIGHTS) as SymptomKey[];
     symptomKeys.forEach((k) => {
       if (symptoms[k]) modifier += SYMPTOM_WEIGHTS[k] * 0.4;
     });
     if (demo.menopausal === "Post-menopausal") modifier += 0.06;
-
     const ensemble = Math.min(
       0.99,
       Math.max(
@@ -113,7 +104,6 @@ export default function CancerTrackPage() {
           Math.max(0, Math.min(1, 0.5 + modifier)) * 0.15,
       ),
     );
-
     setResult({
       lrProb,
       dtResult,
@@ -127,7 +117,6 @@ export default function CancerTrackPage() {
       demographics: { ...demo },
       symptoms: { ...symptoms },
     });
-
     setStep(4);
   }
 
@@ -140,37 +129,41 @@ export default function CancerTrackPage() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-[#020817] text-slate-200 pb-16"
-      style={{ fontFamily: "'Trebuchet MS', 'Lucida Grande', sans-serif" }}
-    >
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-20">
       {/* ── Header ── */}
-      <header className="border-b border-slate-800 px-8 py-5 flex justify-between items-center">
-        <div>
-          <h1
-            className="text-2xl font-black text-slate-50 m-0 tracking-tight"
-            style={{ fontFamily: "'Georgia', serif" }}
-          >
-            CancerTrack{" "}
-            <span className="text-sky-400 font-normal text-base">
-              / Clinical Analysis
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-rose-500 text-xl">⬡</span>
+              <h1 className="text-lg sm:text-xl font-black text-slate-50 tracking-tight">
+                CancerTrack
+              </h1>
+              <span className="hidden sm:inline text-slate-600 font-light">
+                |
+              </span>
+              <span className="hidden sm:inline text-sm text-slate-500 font-normal">
+                Clinical Analysis
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-600 tracking-[0.15em] uppercase mt-0.5 hidden sm:block">
+              WBCD-Trained · Logistic Regression + Decision Tree Ensemble
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="text-xs text-slate-400 font-mono whitespace-nowrap">
+              Model Active
             </span>
-          </h1>
-          <p className="text-xs text-slate-600 tracking-widest mt-1">
-            REAL ML MODEL · WBCD-TRAINED · BREAST CANCER RISK ASSESSMENT
-          </p>
-        </div>
-        <div className="text-right text-xs text-slate-700 leading-relaxed">
-          <div className="text-green-400 font-bold">● MODEL LOADED</div>
-          <div>LR accuracy: 95.6% · DT accuracy: 93.1%</div>
+          </div>
         </div>
       </header>
 
       {/* ── Step indicator ── */}
       <StepIndicator step={step} onNavigate={(s) => setStep(s)} />
 
-      {/* ── Content — wider max-width ── */}
-      <main className="max-w-4xl mx-auto mt-8 px-6">
+      {/* ── Page content ── */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8">
         {step === 1 && (
           <DemographicsStep
             demo={demo}

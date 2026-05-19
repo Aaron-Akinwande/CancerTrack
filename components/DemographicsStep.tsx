@@ -1,7 +1,7 @@
 "use client";
 
 import type { Demographics } from "@/types";
-import { Field, inputStyle } from "./Field";
+import { Field, inputStyle, Card, SectionHeading, NavButtons } from "./Field";
 
 interface DemographicsStepProps {
   demo: Demographics;
@@ -18,17 +18,15 @@ export function DemographicsStep({
   onNext,
 }: DemographicsStepProps) {
   return (
-    <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800">
-      <h2
-        className="text-2xl font-black text-slate-50 mb-6"
-        style={{ fontFamily: "'Georgia', serif" }}
-      >
-        Patient Demographics
-      </h2>
+    <Card className="p-6 sm:p-8">
+      <SectionHeading
+        title="Patient Demographics"
+        subtitle="Basic patient information used for age-adjusted clinical risk scoring."
+      />
 
       <Field
         label="Patient Name / ID"
-        hint="Optional — for record keeping only"
+        hint="Optional — used for the downloaded report only"
       >
         <input
           style={inputStyle}
@@ -38,8 +36,9 @@ export function DemographicsStep({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-5">
-        <Field label="Age" hint="Risk increases significantly after 40">
+      {/* Age + Sex — stack to 1-col on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Age" >
           <input
             style={inputStyle}
             type="number"
@@ -67,7 +66,7 @@ export function DemographicsStep({
 
       <Field
         label="Menopausal Status"
-        hint="Post-menopausal status is associated with higher risk"
+        hint="Post-menopausal status carries an additional +6% modifier"
       >
         <select
           style={inputStyle}
@@ -83,18 +82,41 @@ export function DemographicsStep({
         </select>
       </Field>
 
-      <button
-        onClick={onNext}
-        className="w-full py-4 mt-2 rounded-xl text-white text-base font-black tracking-wider
-                   cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-y-0
-                   shadow-lg shadow-sky-900/40"
-        style={{
-          background: "linear-gradient(135deg, #0284c7, #0369a1)",
-          border: "none",
-        }}
-      >
-        Continue → Symptom Assessment
-      </button>
-    </div>
+      {/* Risk modifier preview chips */}
+      <div className="flex flex-wrap gap-2 mt-1 mb-2">
+        {[
+          {
+            label: "Age modifier",
+            value: demo.age
+              ? parseInt(demo.age) >= 60
+                ? "High ↑"
+                : parseInt(demo.age) >= 40
+                  ? "Moderate"
+                  : "Low"
+              : "—",
+          },
+          {
+            label: "Menopausal",
+            value:
+              demo.menopausal === "Post-menopausal"
+                ? "+6% applied"
+                : "No modifier",
+          },
+        ].map((chip) => (
+          <div
+            key={chip.label}
+            className="flex items-center gap-1.5 bg-slate-800 border border-slate-700
+                                           rounded-full px-3 py-1"
+          >
+            <span className="text-xs text-slate-500">{chip.label}:</span>
+            <span className="text-xs font-bold text-slate-300">
+              {chip.value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <NavButtons onNext={onNext} nextLabel="Continue → Symptom Assessment" />
+    </Card>
   );
 }
