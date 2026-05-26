@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Python backend
+venv/
+python/model.pkl
+python/scaler_params.json
+python/__pycache__/
+*.pyc
+
 # vercel
 .vercel
 

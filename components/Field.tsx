@@ -82,11 +82,13 @@ export function NavButtons({
   onNext,
   nextLabel = "Continue",
   nextStyle,
+  nextLoading,
 }: {
   onBack?: () => void;
   onNext: () => void;
   nextLabel?: string;
   nextStyle?: React.CSSProperties;
+  nextLoading?: boolean;
 }) {
   return (
     <div className="flex gap-3 mt-7">
@@ -102,9 +104,9 @@ export function NavButtons({
       )}
       <button
         onClick={onNext}
-        className="flex-[3] py-3.5 rounded-xl text-white text-base font-black
+        className={`flex-[3] py-3.5 rounded-xl text-white text-base font-black
                    tracking-wide cursor-pointer transition-all
-                   hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
+                   hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 ${nextLoading ? "opacity-60 cursor-not-allowed" : ""}`}
         style={
           nextStyle ?? {
             background: "linear-gradient(135deg,#0284c7,#0369a1)",
