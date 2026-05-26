@@ -57,6 +57,7 @@ export default function CancerTrackPage() {
   const [symptoms, setSymptoms] = useState<Symptoms>(defaultSymptoms);
   const [measurements, setMeasurements] =
     useState<Measurements>(defaultMeasurements);
+  const [loading, setLoading] = useState(false);
 
   function updateDemo<K extends keyof Demographics>(
     key: K,
@@ -74,50 +75,130 @@ export default function CancerTrackPage() {
     setMeasurements((m) => ({ ...m, [key]: value }));
   }
 
-  function runAnalysis() {
-    const features: number[] = [
-      parseFloat(measurements.radius) || SCALER_MEAN[0],
-      parseFloat(measurements.texture) || SCALER_MEAN[1],
-      parseFloat(measurements.perimeter) || SCALER_MEAN[2],
-      parseFloat(measurements.area) || SCALER_MEAN[3],
-      parseFloat(measurements.smoothness) || SCALER_MEAN[4],
-      parseFloat(measurements.compactness) || SCALER_MEAN[5],
-      parseFloat(measurements.concavity) || SCALER_MEAN[6],
-      parseFloat(measurements.concave_points) || SCALER_MEAN[7],
-      parseFloat(measurements.symmetry) || SCALER_MEAN[8],
-      parseFloat(measurements.fractal_dimension) || SCALER_MEAN[9],
-    ];
-    const lrProb = runLogisticRegression(features);
-    const dtResult = runDecisionTree(features);
-    let modifier = getAgeRisk(parseInt(demo.age) || 45);
-    const symptomKeys = Object.keys(SYMPTOM_WEIGHTS) as SymptomKey[];
-    symptomKeys.forEach((k) => {
-      if (symptoms[k]) modifier += SYMPTOM_WEIGHTS[k] * 0.4;
-    });
-    if (demo.menopausal === "Post-menopausal") modifier += 0.06;
-    const ensemble = Math.min(
-      0.99,
-      Math.max(
-        0.01,
-        lrProb * 0.5 +
-          dtResult.prob * 0.35 +
-          Math.max(0, Math.min(1, 0.5 + modifier)) * 0.15,
-      ),
-    );
-    setResult({
-      lrProb,
-      dtResult,
-      ensemble,
-      features,
-      activeSymptoms: symptomKeys.filter((k) => symptoms[k]),
-      modifier,
-      timestamp: new Date().toLocaleString(),
-      patientName: demo.name || "Anonymous",
-      age: demo.age,
-      demographics: { ...demo },
-      symptoms: { ...symptoms },
-    });
-    setStep(4);
+  // function runAnalysis() {
+  //   const features: number[] = [
+  //     parseFloat(measurements.radius) || SCALER_MEAN[0],
+  //     parseFloat(measurements.texture) || SCALER_MEAN[1],
+  //     parseFloat(measurements.perimeter) || SCALER_MEAN[2],
+  //     parseFloat(measurements.area) || SCALER_MEAN[3],
+  //     parseFloat(measurements.smoothness) || SCALER_MEAN[4],
+  //     parseFloat(measurements.compactness) || SCALER_MEAN[5],
+  //     parseFloat(measurements.concavity) || SCALER_MEAN[6],
+  //     parseFloat(measurements.concave_points) || SCALER_MEAN[7],
+  //     parseFloat(measurements.symmetry) || SCALER_MEAN[8],
+  //     parseFloat(measurements.fractal_dimension) || SCALER_MEAN[9],
+  //   ];
+  //   const lrProb = runLogisticRegression(features);
+  //   const dtResult = runDecisionTree(features);
+  //   let modifier = getAgeRisk(parseInt(demo.age) || 45);
+  //   const symptomKeys = Object.keys(SYMPTOM_WEIGHTS) as SymptomKey[];
+  //   symptomKeys.forEach((k) => {
+  //     if (symptoms[k]) modifier += SYMPTOM_WEIGHTS[k] * 0.4;
+  //   });
+  //   if (demo.menopausal === "Post-menopausal") modifier += 0.06;
+  //   const ensemble = Math.min(
+  //     0.99,
+  //     Math.max(
+  //       0.01,
+  //       lrProb * 0.5 +
+  //         dtResult.prob * 0.35 +
+  //         Math.max(0, Math.min(1, 0.5 + modifier)) * 0.15,
+  //     ),
+  //   );
+  //   setResult({
+  //     lrProb,
+  //     dtResult,
+  //     ensemble,
+  //     features,
+  //     activeSymptoms: symptomKeys.filter((k) => symptoms[k]),
+  //     modifier,
+  //     timestamp: new Date().toLocaleString(),
+  //     patientName: demo.name || "Anonymous",
+  //     age: demo.age,
+  //     demographics: { ...demo },
+  //     symptoms: { ...symptoms },
+  //   });
+  //   setStep(4);
+  // }
+
+  async function runAnalysis() {
+    setLoading(true);
+
+    // Build request body — blank fields fall back to WBCD population mean
+    const body = {
+      radius: parseFloat(measurements.radius) || SCALER_MEAN[0],
+      texture: parseFloat(measurements.texture) || SCALER_MEAN[1],
+      perimeter: parseFloat(measurements.perimeter) || SCALER_MEAN[2],
+      area: parseFloat(measurements.area) || SCALER_MEAN[3],
+      smoothness: parseFloat(measurements.smoothness) || SCALER_MEAN[4],
+      compactness: parseFloat(measurements.compactness) || SCALER_MEAN[5],
+      concavity: parseFloat(measurements.concavity) || SCALER_MEAN[6],
+      concave_points: parseFloat(measurements.concave_points) || SCALER_MEAN[7],
+      symmetry: parseFloat(measurements.symmetry) || SCALER_MEAN[8],
+      fractal_dimension:
+        parseFloat(measurements.fractal_dimension) || SCALER_MEAN[9],
+    };
+
+    try {
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error ?? "Unknown server error");
+      }
+
+      const data = await res.json();
+      // data shape: { lr_prob, dt_result: { malignant, prob, path }, ensemble, z_scores }
+
+      // ── Clinical modifier (stays in the frontend — age + symptoms + menopausal) ──
+      let modifier = getAgeRisk(parseInt(demo.age) || 45);
+      const symptomKeys = Object.keys(SYMPTOM_WEIGHTS) as SymptomKey[];
+      symptomKeys.forEach((k) => {
+        if (symptoms[k]) modifier += SYMPTOM_WEIGHTS[k] * 0.4;
+      });
+      if (demo.menopausal === "Post-menopausal") modifier += 0.06;
+
+      // Blend real-model ensemble (85%) with clinical modifier layer (15%)
+      const clinicalScore = Math.max(0, Math.min(1, 0.5 + modifier));
+      const finalEnsemble = Math.min(
+        0.99,
+        Math.max(0.01, data.ensemble * 0.85 + clinicalScore * 0.15),
+      );
+
+      setResult({
+        lrProb: data.lr_prob,
+        dtResult: {
+          malignant: data.dt_result.malignant,
+          prob: data.dt_result.prob,
+          path: data.dt_result.path,
+        },
+        ensemble: finalEnsemble,
+        features: Object.values(body) as number[],
+        activeSymptoms: symptomKeys.filter((k) => symptoms[k]),
+        modifier,
+        timestamp: new Date().toLocaleString(),
+        patientName: demo.name || "Anonymous",
+        age: demo.age,
+        demographics: { ...demo },
+        symptoms: { ...symptoms },
+      });
+
+      setStep(4);
+    } catch (err) {
+      console.error("[runAnalysis]", err);
+      const message = err instanceof Error ? err.message : String(err);
+      alert(
+        `Analysis failed: ${message}\n\n` +
+          "Make sure the Python server is running:\n" +
+          "  uvicorn python.server:app --reload --port 8000",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   function reset() {
@@ -180,11 +261,18 @@ export default function CancerTrackPage() {
           />
         )}
         {step === 3 && (
+          // <MeasurementsStep
+          //   measurements={measurements}
+          //   onChange={updateMeasurement}
+          //   onAnalyze={runAnalysis}
+          //   onBack={() => setStep(2)}
+          // />
           <MeasurementsStep
             measurements={measurements}
             onChange={updateMeasurement}
             onAnalyze={runAnalysis}
             onBack={() => setStep(2)}
+            loading={loading}
           />
         )}
         {step === 4 && result && (
