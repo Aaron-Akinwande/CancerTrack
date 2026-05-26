@@ -9,6 +9,7 @@ interface MeasurementsStepProps {
   onChange: (key: keyof Measurements, value: string) => void;
   onAnalyze: () => void;
   onBack: () => void;
+  loading?: boolean;
 }
 
 export function MeasurementsStep({
@@ -16,6 +17,7 @@ export function MeasurementsStep({
   onChange,
   onAnalyze,
   onBack,
+  loading
 }: MeasurementsStepProps) {
   const filled = Object.values(measurements).filter(Boolean).length;
 
@@ -76,11 +78,12 @@ export function MeasurementsStep({
       <NavButtons
         onBack={onBack}
         onNext={onAnalyze}
-        nextLabel="🔬  Run Full Analysis"
+        nextLabel={loading ? "⏳ Analysing…" : "🔬 Run Full Analysis"}
         nextStyle={{
           background: "linear-gradient(135deg,#059669,#047857)",
           border: "none",
         }}
+        nextLoading={loading}
       />
     </Card>
   );

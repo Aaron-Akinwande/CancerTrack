@@ -24,17 +24,17 @@ export const MODEL_WEIGHTS: number[] = [
 export const MODEL_BIAS = -0.6843;
 
 // StandardScaler parameters fitted on WBCD training split
-export const SCALER_MEAN: number[] = [
-  14.127, 19.290, 91.969, 654.889,
-  0.09638, 0.10434, 0.08880, 0.04892,
-  0.18115, 0.06280,
-];
+// export const SCALER_MEAN: number[] = [
+//   14.127, 19.290, 91.969, 654.889,
+//   0.09638, 0.10434, 0.08880, 0.04892,
+//   0.18115, 0.06280,
+// ];
 
-export const SCALER_STD: number[] = [
-  3.524, 4.301, 24.299, 351.914,
-  0.01406, 0.05281, 0.07972, 0.03880,
-  0.02741, 0.00706,
-];
+// export const SCALER_STD: number[] = [
+//   3.524, 4.301, 24.299, 351.914,
+//   0.01406, 0.05281, 0.07972, 0.03880,
+//   0.02741, 0.00706,
+// ];
 
 // ─── Clinical symptom risk modifiers ─────────────────────────────────────────
 // Source: NCI + WHO breast cancer risk factor likelihood ratio literature.
@@ -79,3 +79,29 @@ export const FEATURE_LABELS: string[] = [
   "Radius", "Texture", "Perimeter", "Area", "Smoothness",
   "Compactness", "Concavity", "Concave Pts", "Symmetry", "Fractal Dim",
 ];
+
+ export const SCALER_MEAN = [
+    14.067213186813202,
+    19.247362637362627,
+    91.55740659340661,
+    648.5410989010988,
+    0.0961674285714285,
+    0.10386890109890125,
+    0.08919332241758247,
+    0.048343951648351625,
+    0.18061802197802207,
+    0.06281978021978024
+  ]
+
+ export const SCALER_STD = [
+    3.4955321235941827,
+    4.400447138909897,
+    24.122678706966134,
+    344.5652953047693,
+    0.013442917175187976,
+    0.05346281483630457,
+    0.08165706364246943,
+    0.038881754843920285,
+    0.02804354432850832,
+    0.007151546790041871
+  ]
